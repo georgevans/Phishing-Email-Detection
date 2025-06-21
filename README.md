@@ -39,3 +39,15 @@ And finally I will need to split data into training and testing data (I plan on 
 I plan on using a Multinomial Naive Bayes model to classify my emails as phishing or legitimate. The reasoning behind the decision for this model is that its built for classification, fast to train, and it works well with small/medium datasets.
 
 
+# Development
+
+## Cleaning data
+So in order to make this data usable in a Multinomial naive bayes model I will need to clean it and format it in a way that I have training and test data split by subject, text and the label (0, for non spam and 1 for spam). 
+
+To do this I have thought of two potential apporaches.
+1. Converting the .csv file into a object format then converting to a pandas dataframe
+- - This would be done by reading the csv file in and then using a loop to format it into an object
+2. The alternative is converting directly from csv to pandas
+- - This is a much faster method but gives me less control over the inital format of the data which could be relavant later down the line.
+
+I intend on implementing both methods to see which gives the best results.
