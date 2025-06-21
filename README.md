@@ -51,3 +51,8 @@ To do this I have thought of two potential apporaches.
 - - This is a much faster method but gives me less control over the inital format of the data which could be relavant later down the line.
 
 I intend on implementing both methods to see which gives the best results.
+
+# To Do next time
+We need to evaluate the first iteration of the model (inital tests show its not good ha)
+For some reason its reporting a accuracy of 99.52% but predicting wrong 4 out of 5 times with non Spam data, so potentially an issue with the data we are training it on.
+Look into alternate model parameters and maybe even a new dataset.
