@@ -52,7 +52,27 @@ To do this I have thought of two potential apporaches.
 
 I intend on implementing both methods to see which gives the best results.
 
-# To Do next time
-We need to evaluate the first iteration of the model (inital tests show its not good ha)
-For some reason its reporting a accuracy of 99.52% but predicting wrong 4 out of 5 times with non Spam data, so potentially an issue with the data we are training it on.
-Look into alternate model parameters and maybe even a new dataset.
+## Issue in first iteration of development
+I've noticed an issue with the program in which the model reports an accuracy of 99%> however when tested using emails from outside of the phishing dataset, I get the wrong classification 4 out of 5 times. I'm unsure what could be causing this but planning on analysing individual parts of my code to get a better idea. My inital assumption is the model being overfitted to the data causing the high accuracy score for the testing data but unable to correcly classify non-training or non-testing data.
+
+### Potential causes of issue
+- Data leakage  
+   - This could be caused by the preprocessing stage exposing label information which allows the model to "cheat"  
+   - I do think this is unlikely as my code (as shown below) correctly preprocesses the data in a way that avoids data leakage:  
+     ```python
+     vectorizer = CountVectorizer()
+     X_train_vectors = vectorizer.fit_transform(X_train)
+     X_test_vectors = vectorizer.transform(X_test)
+     ```
+  - Given this information I think its unlikely that data leakage is causing the issue 
+- Over fitting of the model
+  - This could be caused by the model "memorizing" patterns in the training data that doesnt extend to new emails
+  - A common sign of overfitting is high accuracy with training/test data but poor performance on real emails
+  - Often caused by a dataset that is either too small or not diverse.
+  - This I believe is the most likely culprit as the data set only contains 2859 emails which may not be sufficient in training this kind of     model
+  - A potential fix beside finding an entirely new dataset would be to add regularization which is something I will test in the future.
+- If the test set is not representative of the training set we could have exposed the model to weak generalization
+- Vocabulary mismatch
+  - New emails may contain words not seen in training set, this could cause the model to be unable to interpret them.
+ 
+I'm predicting the issue is overfitting as it would explain the high accuracy on testing data (of the same data set) but the poor results when classifying emails outside the dataset.
