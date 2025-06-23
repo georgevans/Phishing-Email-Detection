@@ -18,14 +18,19 @@ with open('data/Ling.csv', mode='r') as file:
 
 df = pd.DataFrame(data)
 
-print(df)
+
 
 #X = df['subject'] + " " + df['text']
-X = df['text']
-y = df['label']
+Nphish = df[df['label'] == 0].sample(n=458, random_state=42)
+phish = df[df['label'] == 1]
+
+balanced_df = pd.concat([Nphish, phish])
+X = balanced_df['text']
+y = balanced_df['label']
+
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
-print(X_test)
+
 
 vectorizer = CountVectorizer()
 X_train_vectors = vectorizer.fit_transform(X_train)

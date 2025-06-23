@@ -76,3 +76,44 @@ I've noticed an issue with the program in which the model reports an accuracy of
   - New emails may contain words not seen in training set, this could cause the model to be unable to interpret them.
  
 I'm predicting the issue is overfitting as it would explain the high accuracy on testing data (of the same data set) but the poor results when classifying emails outside the dataset.
+
+In order to fix this issue I want to try a few things:
+- Check class balance
+- Look at adding more diverse data
+- Switch to TfidVectorizer for better feature extraction
+- Potentially look at changing the model type entirely (this would be a last resort)
+
+Initially I ran the below code in an attempt to see if my data set was biased towards either pishing or non-phishing emails:
+```python
+print(df['label'].value_counts())
+```
+This returned the following:
+```bash
+label
+0    2401
+1     458
+```
+This confirmed my suspicion that the issue was relating to the dataset being used and potential bias. As this result shows a clear bias towards non-phishing emails.
+
+To gain more confirmation of this being the issue, I will run the following code to undersample my non-phishing emails in the dataset.
+```
+Nphish = df[df['label'] == 0].sample(n=458, random_state=42)
+phish = df[df['label'] == 1]
+
+balanced_df = pd.concat([Nphish, phish])
+X = balanced_df['text']
+y = balanced_df['label']
+``` 
+This caused a decrease in accuracy to 97.5% but still falsely identified 4 of the 5 test emails from outside the dataset.
+However we can likely attribute this to further reducing the dataset size to only 458 emails which is unlikley to be sufficient data to train the model.
+
+I added a confusion matrix to the model evaluation to see how it was classifying, the model had:
+- 138 True negatives
+- 7 False positives
+- 0 False negatives 
+- 130 True positives
+
+So after running these tests we can see the issue is most likley overfitting as the model is functioning correclty but only on data relating to the training and testing set.
+
+So in order to address these issues I'll need a much larger and more diverse dataset.
+
