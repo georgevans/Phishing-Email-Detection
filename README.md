@@ -117,3 +117,89 @@ So after running these tests we can see the issue is most likley overfitting as 
 
 So in order to address these issues I'll need a much larger and more diverse dataset.
 
+## Introducing a larger dataset
+In order to fix my issue with potential overfitting or data leakage I have decided to create a larger more diverse dataset using more varied phishing and non-phishing emails.
+
+To combine multiple csv files I need to address the issue of formatting as some datasets I found online use different formats to store their csv information.
+
+To get around this I need to standardize the format, I did this using the following:
+```python
+def load_csv(file_path):
+    df = pd.read_csv(file_path)
+
+    if {'subject', 'body', 'label'}.issubset(df.columns):
+        df = df[['subject', 'body', 'label']]
+    elif {'sender','receiver','date','subject','body','urls','label'}.issubset(df.columns):
+        df = df[['subject', 'body', 'label']]
+    elif {'sender','receiver','date','subject','body','label','urls'}.issubset(df.columns):
+        df = df[['sender', 'body', 'label']]
+    else:
+        raise ValueError(f"Unexpected format in file: {file_path}")
+    return df
+```
+This function is able to create a dataframe of the same format despite the differences in formats of the csv files being combined
+
+To combine the files:
+```python 
+def combine_csvs(folder_path):
+    combined_df = pd.DataFrame(columns=['text', 'label'])
+    for filename in os.listdir(folder_path):
+        if filename.endswith('.csv'):
+            file_path = os.path.join(folder_path, filename)
+            try:
+                df = load_csv(file_path)
+                combined_df = pd.concat([combined_df, df], ignore_index=True)
+            except Exception as e:
+                print(f"Error processing {filename}: {e}")
+    return combined_df
+```
+
+This results in a larger more diverse database with a much better distribution of phishing and non-phishing emails with around 25583 phishing emails and 23804 non-phishing emails. This should stop the model over guessing phishing emails.
+
+After testing this did not immidelty fix the issue, it did have a positive impact on the model accuracy (increasing it by 0.2%, to around 99.73%) however it did not have a meaningful effect on external test data which still resulted in 4 out of 5 false positives. 
+
+## Alternate fix idea
+I plan on using TfidVectorizer as oppose to countvectorizer as this helps reduce the impact of commonly occuring words and places more emphasis on meaningful, distinct words within the emails. My hope is this will improve the models ability to spot words commonly assocaited with phishing like "Download", "quick" and other words that are common in phishing emails.
+
+To implement:
+```python
+vectorizer = TfidfVectorizer(
+    max_features=5000,          
+    stop_words='english',     
+    ngram_range=(1, 2)          
+)
+
+X_train_vectors = vectorizer.fit_transform(X_train)
+X_test_vectors = vectorizer.transform(X_test)
+```
+
+This worked in intial testing with all 5 external phishing emails correctly classfied as phishing and all 5 non-phishing emails correclty classified as non-phishing
+
+### Inital Model Performance Summary
+The test data returned the following:
+```
+[[732   1]
+ [  6 119]]
+              precision    recall  f1-score   support
+
+           0       0.99      1.00      1.00       733
+           1       0.99      0.95      0.97       125
+
+    accuracy                           0.99       858
+   macro avg       0.99      0.98      0.98       858
+weighted avg       0.99      0.99      0.99       858
+
+Accuracy: 99.18%
+```
+- Evaluated the model on a holdout test set of 858 emails.
+- Achieved **overall accuracy of 99.18%**.
+- **Very high precision and recall** for both spam (label 1) and ham (label 0).
+- Confusion matrix showed:
+  - Only **6 false negatives** (spam misclassified as ham).
+  - Just **1 false positive** (ham misclassified as spam).
+- Indicates the model generalizes well and correctly classifies most emails.
+- Next steps may include further testing on external datasets and real-world examples.
+
+This will require further testing but it does hopefully address the core issue.
+
+# Testing
