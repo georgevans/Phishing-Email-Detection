@@ -203,3 +203,51 @@ Accuracy: 99.18%
 This will require further testing but it does hopefully address the core issue.
 
 # Testing
+In testing I want to use a varied source for emails, one which contains emails of many different subject matters and from various sources. I found a dataset on kaggle by the name of the "spam or not spam dataset" which contains 2873 emails, around 2300 of these are non-phishing (ham) and 500 phishing (spam).
+
+### link
+https://www.kaggle.com/datasets/ozlerhakan/spam-or-not-spam-dataset/data
+
+## First round of testing
+In my first round of testing for the model I achieved the following results:
+|               | Precision | Recall | F1-Score | Support |
+|---------------|-----------|--------|----------|---------|
+| **0**         | 0.96      | 0.83   | 0.89     | 2500    |
+| **1**         | 0.50      | 0.84   | 0.63     | 500     |
+|               |           |        |          |         |
+| **Accuracy**  |           |        | 0.83     | 3000    |
+| **Macro Avg** | 0.73      | 0.83   | 0.76     | 3000    |
+| **Weighted Avg** | 0.89   | 0.83   | 0.85     | 3000    |
+
+**Accuracy:** 83.40%
+
+These intially seemed great but on closer examination I noticed the low recall for spam results, with almost 50% of emails labeled as spam actually being ham which is a large number of false positives and substantially decreases the models usefullness in a practical application.
+
+I believe this could have been caused by the training data used consisting of mostly non-phishing emails causing it to have a bias towards non-phishing emails.
+
+To improve this, I plan to experiment with the alpha parameter of the model, as well as the number and range of n-grams included in the feature extraction. While increasing these parameters can enhance the model’s ability to capture meaningful patterns, it also raises the risk of overfitting. To mitigate this, I intend to adjust them incrementally and re-evaluate the model’s performance after each change.
+
+### Alpha
+I initally changed the alpha to 0.5, this only made the model worse and decreased its precision to 0.29 for spam, decreasing it further only made the model worse. Increasing the alpha did improve it but the precision never exceeded 0.5. From this I concluded alpha was not an adequate way to improve the model's precision.
+
+### Number of n-grams
+Increasing the max number of features should increase the number of words the model captures meaning it has a larger vocabulary size, hopefully this will increase the model's precision. I initally had my ```max_features``` set to only 5000, increasing it to 10000 lead to much better results:
+|               | Precision | Recall | F1-Score | Support |
+|---------------|-----------|--------|----------|---------|
+| **0**         | 0.94      | 0.96   | 0.95     | 2500    |
+| **1**         | 0.79      | 0.70   | 0.74     | 500     |
+|               |           |        |          |         |
+| **Accuracy**  |           |        | 0.83     | 3000    |
+| **Macro Avg** | 0.86      | 0.83   | 0.85     | 3000    |
+| **Weighted Avg** | 0.92   | 0.92   | 0.92     | 3000    |
+
+**Accuracy:** 91.83%
+
+- decrease of spam recall from 0.84 to 0.70
+- increase of spam precision from 0.5 to 0.79
+- increase of macro avg of precion from 0.73 to 0.86
+- increase of macro avg f1 from 0.76 to 0.85
+- increase of weighted avg precision from 0.89 to 0.92
+- increase of weighted avg recall from 0.83 to 0.92
+- weighted f1 from 0.85 to 0.92
+- increase in accuracy from 83.40% to 91.83%.

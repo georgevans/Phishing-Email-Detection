@@ -45,7 +45,7 @@ def combine_csvs(folder_path):
 
 df = combine_csvs('data')
 
-print(df['label'].value_counts())
+# print(df['label'].value_counts())
 df = pd.DataFrame(data)
 
 
@@ -59,7 +59,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_
 
 
 vectorizer = TfidfVectorizer(
-    max_features=5000,          
+    max_features=10000,          
     stop_words='english',     
     ngram_range=(1, 2)          
 )
