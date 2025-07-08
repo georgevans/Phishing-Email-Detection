@@ -251,3 +251,7 @@ Increasing the max number of features should increase the number of words the mo
 - increase of weighted avg recall from 0.83 to 0.92
 - weighted f1 from 0.85 to 0.92
 - increase in accuracy from 83.40% to 91.83%.
+
+  # to do next time
+  write an evaluation of the previous changes (increasing max features)
+  Look at changing the movel to accept bigrams (changing n-gram range)
