@@ -19,7 +19,7 @@ model.fit(X_train_vectors, y_train)
 # print(f"Accuracy: {accuracy * 100:.2f}%\n")
 
 # Load and clean external test CSV
-with open('data/spam_or_not_spam.csv', mode='r') as file:
+with open('test/spam_or_not_spam.csv', mode='r') as file:
     reader = csv.reader(file)
     next(reader)  # Skip header
     texts = []

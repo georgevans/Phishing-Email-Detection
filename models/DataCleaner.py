@@ -4,19 +4,6 @@ import os
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 
-with open('data/Ling.csv', mode='r') as file:
-    File = csv.reader(file)
-    next(File)
-    data = {
-        'subject': [],
-        'text': [],
-        'label': []
-    }
-    for lines in File:
-        data['subject'].append(lines[0])
-        data['text'].append(lines[1])
-        data['label'].append(int(lines[2]))
-
 def load_csv(file_path):
     df = pd.read_csv(file_path)
 
@@ -37,18 +24,33 @@ def combine_csvs(folder_path):
             file_path = os.path.join(folder_path, filename)
             try:
                 df = load_csv(file_path)
+                
+                # Combine columns into one text column
+                if 'subject' in df.columns:
+                    df['text'] = df['subject'].fillna('') + " " + df['body'].fillna('')
+                elif 'sender' in df.columns:
+                    df['text'] = df['sender'].fillna('') + " " + df['body'].fillna('')
+                else:
+                    df['text'] = df['body'].fillna('')
+                
+                # Keep only text and label
+                
+                df = df[['text', 'label']]
+                
                 combined_df = pd.concat([combined_df, df], ignore_index=True)
             except Exception as e:
                 print(f"Error processing {filename}: {e}")
     return combined_df
 
 
+
 df = combine_csvs('data')
 
 # print(df['label'].value_counts())
-df = pd.DataFrame(data)
+df = pd.DataFrame(df)
 
 
+df['label'] = df['label'].astype(int)
 
 #X = df['subject'] + " " + df['text']
 X = df['text']
@@ -56,10 +58,11 @@ y = df['label']
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
-
+# print(f'Number of training emails: {len(y_train)}')
+print(f'Training data split: {y_train.value_counts()}')
 
 vectorizer = TfidfVectorizer(
-    max_features=10000,          
+    max_features=15000,          
     stop_words='english',     
     ngram_range=(1, 2)          
 )

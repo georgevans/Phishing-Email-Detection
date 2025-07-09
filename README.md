@@ -252,6 +252,114 @@ Increasing the max number of features should increase the number of words the mo
 - weighted f1 from 0.85 to 0.92
 - increase in accuracy from 83.40% to 91.83%.
 
+#### Evaluation of changes
+Positives:
+- Improvement of accuracy by 8%
+- Precision for spam detection improved, leading to fewer false positives
+- Weighted recall and F1 show that a higher proportion of correct predictions were made overall, accounting for the class imbalance
+
+Negatives:
+- Recall for spam detection decreased meaning model misses more actual spam, this is not great for the goal of the project is to create a ML model to detect spam, so it missing spam is a huge issue that needs addressing
+- This does however mean a decrease in false positives which could be seen as a good thing
+
+These results make sense considering the increase in number of max features, whilst the model now has a richer vocabulary it is more precise when it does detect spam, but is more hesitant to predict an email is spam.
+
+### N-gram range
+Another change I believe will help improve the model is increasing the models N-gram range to accept tri-grams, this will make the model slower but will hopefully allow it to pick up on phrases like "click here" whereas before it would only see "click" and "here" as two seperate words.
+
+This could have a negative effect on the model as increasing the model to accept tri-grams could result in overfitting to the training data. But it is worth trying nonetheless.
+
+```python 
+vectorizer = TfidfVectorizer(
+    max_features=10000,          
+    stop_words='english',     
+    ngram_range=(1, 3)          
+)
+```
+
+**The results:**
+|               | Precision | Recall | F1-Score | Support |
+|---------------|-----------|--------|----------|---------|
+| **0**         | 0.94      | 0.96   | 0.95     | 2500    |
+| **1**         | 0.80      | 0.68   | 0.74     | 500     |
+|               |           |        |          |         |
+| **Accuracy**  |           |        | 0.92     | 3000    |
+| **Macro Avg** | 0.87      | 0.82   | 0.84     | 3000    |
+| **Weighted Avg** | 0.91   | 0.92   | 0.92     | 3000    |
+
+**Accuracy:** 91.80%
+
+- Increase in class 1 precision from 0.79 to 0.80
+- Decrease in class 1 recall from 0.70 to 0.68
+- Increase in F1 accuracy from 0.83 to 0.92
+- Decrease in weighted avg precision from 0.92 to 0.91
+- Decrease in accuracy from 91.83% to 91.80%
+
+#### Evaluation of changes
+So comparing this with the previous model these improvements are not particularly drastic, whilst the model is more precise with fewer false positives, it did miss more spam which sort of undermines the models purpose, so I think I will revert to the model only using bi-grams as oppose to tri-grams.
+
+### Further changes to N-gram
+Decided to increase the max features to 15000 as the increase from 5000 to 10000 proved to cause the most drastic change out of any other previous tests:
+```python
+vectorizer = TfidfVectorizer(
+    max_features=15000,          
+    stop_words='english',     
+    ngram_range=(1, 2)          
+)
+```
+
+**Results:**
+|               | Precision | Recall | F1-Score | Support |
+|---------------|-----------|--------|----------|---------|
+| **0**         | 0.92      | 0.99   | 0.95     | 2500    |
+| **1**         | 0.92      | 0.57   | 0.70     | 500     |
+|               |           |        |          |         |
+| **Accuracy**  |           |        | 0.92     | 3000    |
+| **Macro Avg** | 0.92      | 0.78   | 0.83     | 3000    |
+| **Weighted Avg** | 0.92   | 0.92   | 0.91     | 3000    |
+
+**Accuracy:** 92.00%
+
+This change had some interesting results, whilst the recall for class 1 did decrease most others were stable with the largest change being an increase in overall accuracy, and an increase in class 0 recall and class 1 precision, with both increase over 0.05%.
+
+It seems the recall of class 1 is the models largest fault with this being the hardest feature to get working correctly. 
+
+It seems the changes made in the first stage of testing have resulted in some increases in accuracy and recall but havent't really shown a significant improvement in decreaseing the number of false positives and false negatives (still saying around 217 emails in the test data were ham when actually spam).
+
+To get around this I plan on increasing the amount of spam emails the model is tested on as I think the model has not seen enough spam to accurately predict what some look like, leading to many spam emails slipping through the cracks.
+
+## Second round of testing
+Now the dataset has been increased from emails 2001 to 34570 emails with 17959 of them being spam and 16611 emails being ham. This should make the model far more accurate and ideally improve its ability to label an email as phishing.
+
+### Increased dataset size results
+**Results**:
+|               | Precision | Recall | F1-Score | Support |
+|---------------|-----------|--------|----------|---------|
+| **0**         | 0.93      | 0.99   | 0.96     | 2500    |
+| **1**         | 0.96      | 0.60   | 0.74     | 500     |
+|               |           |        |          |         |
+| **Accuracy**  |           |        | 0.93     | 3000    |
+| **Macro Avg** | 0.94      | 0.80   | 0.85     | 3000    |
+| **Weighted Avg** | 0.93   | 0.93   | 0.92     | 3000    |
+
+**Accuracy:** 92.83%
+
+- Increase in class 0 precision from 0.92 to 0.93
+- Increase in F1 score for class 0 from 0.95 to 0.96
+- Increase in F1 accuracy from 0.92 to 0.93
+- Increase in macro avg precision from 0.92 to 0.94
+- Increase in Macro avg recall from 0.78 to 0.80
+- Increase in F1 Macro avg from 0.83 to 0.85
+- Increase in Weighted avg precision from 0.92 to 0.93
+- Increase in Weighted avg recall from 0.92 to 0.93
+- Increase in Weighted avg F1 0.91 to 0.92
+
+#### Evaluation of changes
+Increasing the training data seems to have almost universally positive effects with all round increases in the performance of the model. 
+Given this information I plan on further increasing the dataset size using new data.
+
+New dataset to be added:
+https://www.kaggle.com/datasets/subhajournal/phishingemails?resource=download
+
   # to do next time
-  write an evaluation of the previous changes (increasing max features)
-  Look at changing the movel to accept bigrams (changing n-gram range)
+  continue increasing the dataset size, fix the new dataset as it has "" marks which may affect the model.
