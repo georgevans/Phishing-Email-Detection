@@ -13,6 +13,8 @@ def load_csv(file_path):
         df = df[['subject', 'body', 'label']]
     elif {'sender','receiver','date','subject','body','label','urls'}.issubset(df.columns):
         df = df[['sender', 'body', 'label']]
+    elif {'body','label'}.issubset(df.columns):
+        df = df[['sender', 'body', 'label']]
     else:
         raise ValueError(f"Unexpected format in file: {file_path}")
     return df

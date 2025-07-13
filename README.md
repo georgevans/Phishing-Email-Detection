@@ -9,11 +9,6 @@ Project goals
 - Classify an email as phishing or legit
 - Build a interface to test emails
 
-### Classify an email as phishing or legit
-In order to do this I will need to train a ML model to look for signs of a phishing scam. These include things like urgent phrasing, spelling and grammar mistakes, generic greetings, threatening language, requests for personal information and unusual email addresses of links.
-
-I plan on detecting each of these features separately and calculating a percentage score for each one to see how much the model thinks the email is guilty of having that trait. This will be to avoid false positives such as a situation involving a sale, where an email could raise a 95% for urgent phrasing ( as a email about a discount often contains words like “quick” and “now” which are often used in phishing emails ), but only raise a 5% for threatening language and have <5% for spelling and grammar mistakes then we can use this to judge that the email is not phishing despite it having a similar trait.
-
 ## Searching for and cleaning data
 I found this kaggle dataset to use: https://www.kaggle.com/datasets/naserabdullahalam/phishing-email-dataset
 
@@ -35,6 +30,7 @@ I will also need to clean the text and convert it into a number format to ensure
 To clean the text I can use built-in python features and to tokenize and convert the text I will use the nltk module as well as the TfidfVectorizer from the sklearn module
 
 And finally I will need to split data into training and testing data (I plan on an 80/20 split for this)
+
 ## Model training
 I plan on using a Multinomial Naive Bayes model to classify my emails as phishing or legitimate. The reasoning behind the decision for this model is that its built for classification, fast to train, and it works well with small/medium datasets.
 
@@ -356,10 +352,175 @@ Now the dataset has been increased from emails 2001 to 34570 emails with 17959 o
 
 #### Evaluation of changes
 Increasing the training data seems to have almost universally positive effects with all round increases in the performance of the model. 
-Given this information I plan on further increasing the dataset size using new data.
 
-New dataset to be added:
-https://www.kaggle.com/datasets/subhajournal/phishingemails?resource=download
+# Final testing
+I created a csv of around 50 emails to test the models performance on a new set of emails not found in the training set it achieved the following results:
+**Results**:
+|               | Precision | Recall | F1-Score | Support |
+|---------------|-----------|--------|----------|---------|
+| **0**         | 0.91      | 0.80   | 0.85     | 25    |
+| **1**         | 0.96      | 0.60   | 0.74     | 24     |
+|               |           |        |          |         |
+| **Accuracy**  |           |        | 0.86     | 49    |
+| **Macro Avg** | 0.86      | 0.86   | 0.86     | 49    |
+| **Weighted Avg** | 0.86   | 0.86   | 0.86     | 49    |
 
-  # to do next time
-  continue increasing the dataset size, fix the new dataset as it has "" marks which may affect the model.
+**Accuracy:** 85.71%
+
+These results, whilst not as great as in testing show the model is capable of correctly classifying emaails as spam or ham with 85.71% accuracy, this lower score could be due to the smaller size of the emails used in the final round of testing making it harder for the model to correctly classify each email, however it only incorrectly classified 7 of the 50 emails included in the test.
+
+Overall I see this project as a success so far and am now looking at ways to further develop the idea such as a better user interface.
+
+# Final code for the model
+**MNBmodel.py:**
+```python
+import pandas as pd
+import csv
+import sys
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from DataCleaner import X_train_vectors, X_test_vectors, y_train, y_test, vectorizer
+
+csv.field_size_limit(sys.maxsize)
+
+# Train the model
+model = MultinomialNB()
+model.fit(X_train_vectors, y_train)
+
+# Evaluate on DataCleaner test set
+y_pred = model.predict(X_test_vectors)
+print("Test Set Results from DataCleaner split:")
+print(confusion_matrix(y_test, y_pred))
+print(classification_report(y_test, y_pred))
+print(f"Accuracy: {accuracy_score(y_test, y_pred) * 100:.2f}%")
+
+# OPTIONAL: Load and evaluate an external CSV
+# Uncomment if you want to test additional data
+# with open('test/FinalTest.csv', mode='r') as file:
+#     reader = csv.reader(file)
+#     next(reader)
+#     texts = []
+#     labels = []
+#     for row in reader:
+#         if len(row) >= 2:
+#             texts.append(row[0])
+#             labels.append(int(row[1]))
+
+#     X_custom = vectorizer.transform(texts)
+#     y_custom_pred = model.predict(X_custom)
+#     print("\nCustom Test Set Results:")
+#     print(confusion_matrix(labels, y_custom_pred))
+#     print(classification_report(labels, y_custom_pred))
+#     print(f"Accuracy: {accuracy_score(labels, y_custom_pred) * 100:.2f}%")
+```
+
+**DataCleaner.py:**
+```python
+import pandas as pd
+import csv
+import os
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.model_selection import train_test_split
+
+def load_csv(file_path):
+    df = pd.read_csv(file_path)
+
+    if {'subject', 'body', 'label'}.issubset(df.columns):
+        df = df[['subject', 'body', 'label']]
+    elif {'sender','receiver','date','subject','body','urls','label'}.issubset(df.columns):
+        df = df[['subject', 'body', 'label']]
+    elif {'sender','receiver','date','subject','body','label','urls'}.issubset(df.columns):
+        df = df[['sender', 'body', 'label']]
+    elif {'body','label'}.issubset(df.columns):
+        df = df[['sender', 'body', 'label']]
+    else:
+        raise ValueError(f"Unexpected format in file: {file_path}")
+    return df
+
+def combine_csvs(folder_path):
+    combined_df = pd.DataFrame(columns=['text', 'label'])
+    for filename in os.listdir(folder_path):
+        if filename.endswith('.csv'):
+            file_path = os.path.join(folder_path, filename)
+            try:
+                df = load_csv(file_path)
+                
+                # Combine columns into one text column
+                if 'subject' in df.columns:
+                    df['text'] = df['subject'].fillna('') + " " + df['body'].fillna('')
+                elif 'sender' in df.columns:
+                    df['text'] = df['sender'].fillna('') + " " + df['body'].fillna('')
+                else:
+                    df['text'] = df['body'].fillna('')
+                
+                # Keep only text and label
+                
+                df = df[['text', 'label']]
+                
+                combined_df = pd.concat([combined_df, df], ignore_index=True)
+            except Exception as e:
+                print(f"Error processing {filename}: {e}")
+    return combined_df
+
+
+
+df = combine_csvs('data')
+
+# print(df['label'].value_counts())
+df = pd.DataFrame(df)
+
+
+df['label'] = df['label'].astype(int)
+
+#X = df['subject'] + " " + df['text']
+X = df['text']
+y = df['label']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# print(f'Number of training emails: {len(y_train)}')
+print(f'Training data split: {y_train.value_counts()}')
+
+vectorizer = TfidfVectorizer(
+    max_features=15000,          
+    stop_words='english',     
+    ngram_range=(1, 2)          
+)
+
+X_train_vectors = vectorizer.fit_transform(X_train)
+X_test_vectors = vectorizer.transform(X_test)
+
+__all__ = ['X_train_vectors', 'X_test_vectors', 'y_train', 'y_test', 'vectorizer']
+```
+
+# Further developments
+Since the model tests well I am happy with its performance and ability to classify emails. That being said it is undeniable that the model can be improved upon massively, Multinomial naive bayes was the model type I chose for this model, however the model could see better results using some other model types such as:
+- Logistic regression
+- Random forest
+- XGboost
+
+The model could also benefit from utilizing NLP (Natural Language Processing) techniques to give better representation and understanding of the text data.
+
+Beyond these, additional directions for improvement include:
+## Deep Learning Approaches
+Exploring neural networks such as Recurrent Neural Networks (RNNs) or Long Short-Term Memory (LSTM) networks can help capture the sequential nature of email text. These models learn context over longer spans and can detect more complex patterns of phishing language.
+
+## Ensemble Methods
+Combining multiple classifiers into an ensemble (e.g., voting classifiers or stacking) can leverage the strengths of each model and improve generalization across different types of phishing attempts.
+
+## Metadata and Behavioral Features
+Incorporating metadata such as sender domain reputation, frequency of contact, or the presence of suspicious attachments can provide richer signals beyond text content alone.
+
+## Incremental Learning / Online Learning
+Implementing models that can continuously learn from new emails over time (rather than retraining from scratch) can help keep detection up to date with evolving phishing tactics.
+
+## Explainability Tools
+Adding explainable AI methods (like SHAP or LIME) to show why the model flagged an email.
+
+## Adversarial Robustness Testing
+Evaluating how the model performs against adversarial examples or obfuscated phishing text can help you harden it against attacks designed to evade detection.
+
+## Deployment Pipeline
+Developing an API or real-time processing pipeline that integrates with email systems or security gateways to classify emails live.
+
+# Flask
