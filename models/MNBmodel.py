@@ -1,38 +1,44 @@
-import pandas as pd
-import csv
+import os
 import sys
+import pickle
+import csv
+
+import pandas as pd
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
-from DataCleaner import X_train_vectors, X_test_vectors, y_train, y_test, vectorizer
 
 csv.field_size_limit(sys.maxsize)
 
-# Train the model
-model = MultinomialNB()
-model.fit(X_train_vectors, y_train)
+from models.DataCleaner import (
+    X_train_vectors,
+    X_test_vectors,
+    y_train,
+    y_test,
+    vectorizer
+)
 
-# Evaluate on DataCleaner test set
-y_pred = model.predict(X_test_vectors)
-print("Test Set Results from DataCleaner split:")
-print(confusion_matrix(y_test, y_pred))
-print(classification_report(y_test, y_pred))
-print(f"Accuracy: {accuracy_score(y_test, y_pred) * 100:.2f}%")
+def train_and_save_model(model_path):
+    print("Running function (train_and_save_model)...")
+    model = MultinomialNB()
+    print("X_train_vectors type:", type(X_train_vectors))
+    print("y_train type:", type(y_train))
+    print("X_train_vectors:", X_train_vectors)
+    print("y_train:", y_train)
 
-# OPTIONAL: Load and evaluate an external CSV
-# Uncomment if you want to test additional data
-# with open('test/FinalTest.csv', mode='r') as file:
-#     reader = csv.reader(file)
-#     next(reader)
-#     texts = []
-#     labels = []
-#     for row in reader:
-#         if len(row) >= 2:
-#             texts.append(row[0])
-#             labels.append(int(row[1]))
+    model.fit(X_train_vectors, y_train)
+    with open(model_path, 'wb') as f:
+        pickle.dump(model, f)
+    return model
 
-#     X_custom = vectorizer.transform(texts)
-#     y_custom_pred = model.predict(X_custom)
-#     print("\nCustom Test Set Results:")
-#     print(confusion_matrix(labels, y_custom_pred))
-#     print(classification_report(labels, y_custom_pred))
-#     print(f"Accuracy: {accuracy_score(labels, y_custom_pred) * 100:.2f}%")
+def load_model(model_path=None):
+    if model_path is None or not os.path.exists(model_path):
+        print("load_model: First if triggered")
+        return train_and_save_model(os.path.join(os.path.dirname(__file__), "mymodel.pkl"))
+    else:
+        print("load_model: first if not triggered")
+        with open(model_path, 'rb') as f:
+            model = pickle.load(f)
+        return model
+
+def load_vectorizer():
+    return vectorizer

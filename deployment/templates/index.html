@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Email Phishing Detection</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', sans-serif;
+      background-color: #f5f7fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .container {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 500px;
+    }
+    h1 {
+      margin-top: 0;
+      font-weight: 700;
+      font-size: 1.8rem;
+      text-align: center;
+      color: #333;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    input[type="text"],
+    textarea {
+      padding: 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 150px;
+    }
+    input[type="submit"] {
+      background-color: #007BFF;
+      color: white;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    input[type="submit"]:hover {
+      background-color: #0056b3;
+    }
+    .result {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 4px;
+      font-weight: 500;
+      text-align: center;
+    }
+    .ham {
+      background-color: #e9f7ef;
+      color: #155724;
+    }
+    .spam {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Email Phishing Detection</h1>
+    <form action="/" method="post">
+      <input name="subject" type="text" placeholder="Enter Email Subject">
+      <textarea name="body" placeholder="Enter Email Body"></textarea>
+      <input type="submit" value="Check Email">
+    </form>
+    {% if prediction is not none %}
+      <div class="result {% if prediction == 1 %}spam{% else %}ham{% endif %}">
+        {% if prediction == 1 %}
+          This email is likely <strong>phishing</strong>.
+        {% else %}
+          This email is likely <strong>legitimate (ham)</strong>.
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</body>
+</html>
