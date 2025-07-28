@@ -2,12 +2,13 @@
 A program to detect Phishing emails using a Multinomial naive bayes ML model 
 
 # Phishing email detection project
-## Overview
-This project will be a python based tool to detect phishing emails using ML. 
-Project goals
-- Train a basic ML model on a real dataset
-- Classify an email as phishing or legit
-- Build a interface to test emails
+## Summary
+
+- Built an ML model using Multinomial Naive Bayes to detect phishing emails
+- Cleaned and standardized large multi-source datasets (>30,000 emails)
+- Achieved 92–93% accuracy on balanced external datasets
+- Developed a Flask-based frontend UI for easy model interaction
+- Designed for real-world testing and extensibility (Docker)
 
 ## Searching for and cleaning data
 I found this kaggle dataset to use: https://www.kaggle.com/datasets/naserabdullahalam/phishing-email-dataset
@@ -524,3 +525,242 @@ Evaluating how the model performs against adversarial examples or obfuscated phi
 Developing an API or real-time processing pipeline that integrates with email systems or security gateways to classify emails live.
 
 # Flask
+In order to make the model more "usable" I plan on developing it further by using Flask to create a web-based UI to allow easy use of the model. It will take in 2 inputs, 1 for the email subject and another for the body of the email. The user will then be able to click a submit button and see a result as to whether the model classified the email as being a phishing email or not.
+
+## File strucutre
+In order for the app to work I need to re-do my file structure. This will include making a deployment folder to contain the app.py code as well as the templates for the web-app such as the html file and any potential stylesheets or javascript.
+
+## App.py
+This file will contain all endpoints for the app and will be what queries the model to get a response as to what an email has been classified as.
+
+```python
+from flask import Flask, render_template, request
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+print("sys.path:", sys.path)
+from models.DataCleaner import clean_and_vectorise, vectorizer
+from models.MNBmodel import load_model, load_vectorizer
+
+
+app = Flask(__name__)
+
+model = load_model()
+vectorizer = load_vectorizer()
+
+@app.route('/', methods=['GET'])
+def index():
+    return render_template('index.html')
+
+@app.route('/', methods=['POST'])
+def predict():
+    raw_body = request.form.get('body')
+    raw_subject = request.form.get('subject')
+    print(f'raw {raw_body}')
+    X = clean_and_vectorise(raw_body, vectorizer)
+    print(X)
+    prediction = model.predict(X)
+
+    prediction_text = prediction[0]
+    print(prediction_text)
+    return render_template('index.html', prediction=prediction_text)
+
+if __name__ == '__main__':
+    app.run(port=3000, debug=True)
+``` 
+
+This code has two main endpoints:
+- The "index" endpoint is responsible for serving the app with the "index.html" file which contains all html and css for the app.
+- The "predict" endpoint is responsible for actually recieving the email data and then querying the model to get a classification which can be sent to the web-app and displayed using the "index.html" template.
+
+## Index.html
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Email Phishing Detection</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', sans-serif;
+      background-color: #f5f7fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .container {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 500px;
+    }
+    h1 {
+      margin-top: 0;
+      font-weight: 700;
+      font-size: 1.8rem;
+      text-align: center;
+      color: #333;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    input[type="text"],
+    textarea {
+      padding: 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 150px;
+    }
+    input[type="submit"] {
+      background-color: #007BFF;
+      color: white;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    input[type="submit"]:hover {
+      background-color: #0056b3;
+    }
+    .result {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 4px;
+      font-weight: 500;
+      text-align: center;
+    }
+    .ham {
+      background-color: #e9f7ef;
+      color: #155724;
+    }
+    .spam {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Email Phishing Detection</h1>
+    <form action="/" method="post">
+      <input name="subject" type="text" placeholder="Enter Email Subject">
+      <textarea name="body" placeholder="Enter Email Body"></textarea>
+      <input type="submit" value="Check Email">
+    </form>
+    {% if prediction is not none %}
+      <div class="result {% if prediction == 1 %}spam{% else %}ham{% endif %}">
+        {% if prediction == 1 %}
+          This email is likely <strong>phishing</strong>.
+        {% else %}
+          This email is likely <strong>legitimate (ham)</strong>.
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</body>
+</html>
+```
+
+### Menu
+![screenshot](deployment/references/menu.png)
+
+### Phishing email detected 
+![screenshot](deployment/references/phishing%20input.png)
+
+## Setup Instructions
+
+1. Clone the repository  
+   `git clone https://github.com/yourusername/phishing-email-detector.git`
+
+2. Install dependencies  
+   `pip install -r requirements.txt`
+
+3. Run the Flask app  
+   ```bash
+   cd deployment
+   python app.py
+   ```
+
+## Docker
+To simplify deployment, I decided to include Docker support. Docker will allow you to package the application along with the relevant dependencies into a single container which makes it easier to run anywhere such as locally, on servers, or in the cloud.
+
+### Building and Running the Docker Container
+```bash
+# Build the Docker image
+docker build -t phishing-detector .
+
+# Run the container
+docker run -p 3000:3000 phishing-detector
+The application will be available at http://localhost:3000
+
+```
+The application will be available at http://localhost:3000.
+
+# Final project overview
+
+## Objective
+To build and train a machine learning model to classify emails as either phishing or non-phishing.
+
+## How model works
+The model is trained using a **Multinomial Naive Bayes** model which is a algorithm well-suited for text classification tasks. The workflow involves:
+- Preprocessing and cleaning email datasets
+- Converting text into numerical form
+- Training and testing the classifier on labeled email data
+- Evaluating performance using precision, recall, F1-score, and confusion matrix
+- Providing predictions on unseen email data 
+
+## How to use with Docker
+1. Build the docker image
+```bash
+docker build -t phishing-detector .
+```
+
+2. Run the docker container
+```bash
+docker run -p 5000:5000 phishing-detector
+```
+
+3. Once running, access the flask app in browser at http://localhost:5000
+
+## How to use the Flask web app
+This project also includes a web interface where you can use the model live.
+
+1. Run the flash app (app.py) locally or through docker
+2. Enter email subject and body in the form fields
+3. Click "Predict" button
+4. The app will display result
+
+## Technologies used
+- Python 3
+- Scikit-learn
+- Pandas/ NumPy
+- Flask
+- Docker
+
+## Potential future use cases
+- API integration
+- Alternative models for better accuracy 
+- Header and metadata analysis
+- Threat intelligence integration (validate links or attachments in the emails)
+- Extend detection to non-English phishing emails
+
+# To do
+Issue with Docker causing it not to work
